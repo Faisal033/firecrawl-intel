@@ -1,0 +1,80 @@
+const express = require("express");
+require("dotenv").config();
+
+const app = express();
+
+/* =========================
+   GLOBAL SAFETY (CRITICAL)
+========================= */
+process.on("uncaughtException", (err) => {
+  console.error("❌ UNCAUGHT EXCEPTION:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("❌ UNHANDLED PROMISE:", err);
+});
+
+/* =========================
+   MIDDLEWARES
+========================= */
+app.use(express.json());
+
+// CORS (safe for dev)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  next();
+});
+
+/* =========================
+   CONFIG (VERY IMPORTANT)
+========================= */
+// ⚠️ DO NOT use process.env.PORT here
+const PORT = Number(process.env.FIRECRAWL_PORT) || 3003;
+
+/* =========================
+   ROUTES
+========================= */
+
+// Health check
+app.get("/health", (req, res) => {
+  console.log("✅ Firecrawl health check hit");
+  res.status(200).json({ status: "ok" });
+});
+
+// Crawl endpoint (dummy – later Firecrawl SDK integrate)
+app.post("/v1/crawl", (req, res) => {
+  console.log("🕷️ Crawl request:", req.body);
+
+  const { company, url } = req.body;
+
+  if (!company && !url) {
+    return res.status(400).json({
+      success: false,
+      error: "company or url is required",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      target: company || url,
+      content: `Crawled data for ${company || url}`,
+    },
+  });
+});
+
+/* =========================
+   START SERVER (FIXED)
+========================= */
+const server = app.listen(PORT, "127.0.0.1", () => {
+  console.log("\n✅ Firecrawl service running!");
+  console.log(`📝 Health : http://localhost:${PORT}/health`);
+  console.log(`🕷️ Crawl  : POST http://localhost:${PORT}/v1/crawl\n`);
+});
+
+server.on("error", (err) => {
+  console.error("❌ Firecrawl server failed:", err);
+  process.exit(1);
+});
