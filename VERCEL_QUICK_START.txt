@@ -1,0 +1,62 @@
+# ⚡ VERCEL DEPLOYMENT QUICK START (5 MINUTES)
+
+## Get Firecrawl API Key
+```
+→ Visit https://www.firecrawl.dev
+→ Sign up → Dashboard → Copy API Key (sk_xxxxx)
+```
+
+## Create Vercel Account
+```
+→ Visit https://vercel.com
+→ Sign up with GitHub
+```
+
+## Import Project
+```
+→ Vercel Dashboard → New Project
+→ Import Git Repository → Select: firecrawl-intel
+→ Click Import
+```
+
+## Add Environment Variables
+```
+FIRECRAWL_API_URL = https://api.firecrawl.dev
+FIRECRAWL_API_KEY = [YOUR_API_KEY]
+NODE_ENV = production
+PORT = 3000
+```
+
+## Deploy
+```
+→ Click "Deploy" button
+→ Wait 2-3 minutes
+→ Get your production URL! 🎉
+```
+
+---
+
+## Your Production URL
+```
+https://YOUR_PROJECT.vercel.app
+```
+
+---
+
+## Test It Works
+```
+curl https://YOUR_VERCEL_URL/api/v1/health
+→ Should return: {"status":"ok",...}
+```
+
+---
+
+## Share Your URL!
+```
+"My crawler is live at: https://YOUR_VERCEL_URL"
+```
+
+---
+
+## Need Help?
+See: VERCEL_SETUP_GUIDE.md (detailed instructions)
