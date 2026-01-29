@@ -4,6 +4,12 @@ const { Competitor, News, Signal, Threat, Insight } = require('../models');
 const { discoverCompetitorUrls, saveDiscoveredUrls } = require('../services/discovery');
 const { scrapePendingUrls, getScrapingStats } = require('../services/scraping');
 const { scrapeUrl } = require('../services/firecrawl');
+const { createSignalsForPendingNews, getSignalsByType } = require('../services/signals');
+const { computeThreatForCompetitor, getThreatRankings } = require('../services/threat');
+const { syncCompetitor } = require('../services/sync');
+
+const router = express.Router();
+
 /**
  * Crawl any URL (ad-hoc)
  */
@@ -19,11 +25,6 @@ router.post('/v1/crawl', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-const { createSignalsForPendingNews, getSignalsByType } = require('../services/signals');
-const { computeThreatForCompetitor, getThreatRankings } = require('../services/threat');
-const { syncCompetitor } = require('../services/sync');
-
-const router = express.Router();
 
 // ============================================
 // COMPETITOR ROUTES
