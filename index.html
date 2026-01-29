@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telecalling Job Leads Extractor - Direct Firecrawl</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #667eea;
+      --secondary: #764ba2;
+      --success: #4caf50;
+      --danger: #f44336;
+      --warning: #ff9800;
+      --dark: #1a1f26;
+      --light: #f5f5f5;
+      --text: #333;
+      --text-light: #666;
+      --border: #e0e0e0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      font-size: 32px;
+      color: var(--primary);
+      margin-bottom: 5px;
+    }
+
+    header p {
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    .status-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .status-item {
+      background: var(--light);
+      padding: 15px;
+      border-radius: 5px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .status-item label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-light);
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .status-item .value {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--text);
+    }
+
+    .status-item.success {
+      border-left-color: var(--success);
+    }
+
+    .status-item.danger {
+      border-left-color: var(--danger);
+    }
+
+    .status-item.warning {
+      border-left-color: var(--warning);
+    }
+
+    .main-section {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--text);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .portal-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .portal-checkbox {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .portal-checkbox input {
+      width: auto;
+      margin-right: 8px;
+    }
+
+    .portal-checkbox:hover {
+      border-color: var(--primary);
+      background: rgba(102, 126, 234, 0.05);
+    }
+
+    .portal-checkbox input:checked + label {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--light);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--border);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .alert {
+      padding: 15px 20px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .alert-success {
+      background: #f1f8f6;
+      border: 1px solid #4caf50;
+      color: #2e7d32;
+    }
+
+    .alert-danger {
+      background: #fef5f5;
+      border: 1px solid #f44336;
+      color: #c62828;
+    }
+
+    .alert-warning {
+      background: #fff8f0;
+      border: 1px solid #ff9800;
+      color: #e65100;
+    }
+
+    .alert-info {
+      background: #f0f4ff;
+      border: 1px solid #667eea;
+      color: #1a237e;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      transition: width 0.3s;
+    }
+
+    .crawl-info {
+      background: var(--light);
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+      font-size: 14px;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .crawl-info strong {
+      color: var(--text);
+    }
+
+    .results-section {
+      margin-top: 20px;
+    }
+
+    .job-count {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .job-card {
+      background: var(--light);
+      padding: 20px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .job-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .job-company {
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .job-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      font-size: 13px;
+      color: var(--text-light);
+      margin-bottom: 10px;
+    }
+
+    .job-meta span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .job-details {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 15px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    .detail-value {
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .nav-tab {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-light);
+      transition: all 0.3s;
+    }
+
+    .nav-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .json-viewer {
+      background: var(--dark);
+      color: #00ff00;
+      padding: 20px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-light);
+    }
+
+    .empty-state svg {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 24px;
+      }
+
+      .portal-selector {
+        grid-template-columns: 1fr;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .detail-row {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+
+      .status-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>🕷️ Telecalling Job Leads Extractor</h1>
+      <p>Direct Firecrawl API - No Backend Server</p>
+
+      <div class="status-bar">
+        <div class="status-item" id="firecrawl-status">
+          <label>Firecrawl Status</label>
+          <div class="value">⏳ Checking...</div>
+        </div>
+        <div class="status-item">
+          <label>Jobs Extracted</label>
+          <div class="value" id="jobs-count">0</div>
+        </div>
+        <div class="status-item">
+          <label>Last Updated</label>
+          <div class="value" id="last-updated">Never</div>
+        </div>
+        <div class="status-item">
+          <label>Stored Leads</label>
+          <div class="value" id="stored-count">0</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Crawler Section -->
+    <div class="main-section">
+      <div class="section-title">🎯 Crawl Job Portals</div>
+
+      <div class="form-group">
+        <label>Select Portals to Crawl:</label>
+        <div class="portal-selector">
+          <label class="portal-checkbox">
+            <input type="checkbox" id="portal-naukri" value="naukri" checked>
+            <label for="portal-naukri">Naukri</label>
+          </label>
+          <label class="portal-checkbox">
+            <input type="checkbox" id="portal-indeed" value="indeed" checked>
+            <label for="portal-indeed">Indeed</label>
+          </label>
+          <label class="portal-checkbox">
+            <input type="checkbox" id="portal-apna" value="apna" checked>
+            <label for="portal-apna">Apna</label>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Search Query (optional):</label>
+        <input type="text" id="search-query" placeholder="e.g., telecaller, voice process" value="telecaller">
+      </div>
+
+      <div class="button-group">
+        <button class="btn-primary" id="btn-start-crawl" onclick="startCrawl()">
+          🚀 Start Crawling
+        </button>
+        <button class="btn-secondary" onclick="clearAllData()">
+          🗑️ Clear Data
+        </button>
+      </div>
+
+      <div id="alert-container"></div>
+
+      <div id="crawl-progress" class="crawl-info" style="display: none;">
+        <strong>Crawling in progress...</strong>
+        <div id="progress-text"></div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="crawl-info">
+        <strong>ℹ️ How it works:</strong><br>
+        1️⃣ Checks Firecrawl health on http://localhost:3002<br>
+        2️⃣ Crawls job search pages from selected portals<br>
+        3️⃣ Extracts jobs matching "telecalling" keyword<br>
+        4️⃣ Stores results in browser (localStorage + state)<br>
+        5️⃣ View formatted results in the "Results" tab
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="main-section">
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('preview')">📋 Preview</button>
+        <button class="nav-tab" onclick="switchTab('json')">📄 JSON Data</button>
+        <button class="nav-tab" onclick="switchTab('downloads')">💾 Downloads</button>
+      </div>
+
+      <!-- Preview Tab -->
+      <div id="tab-preview" class="tab-content active">
+        <div id="preview-container">
+          <div class="empty-state">
+            <p>No jobs extracted yet. Start crawling to see results here.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON Tab -->
+      <div id="tab-json" class="tab-content">
+        <div id="json-container">
+          <div class="empty-state">
+            <p>No data to display. Start crawling first.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Downloads Tab -->
+      <div id="tab-downloads" class="tab-content">
+        <div id="download-container">
+          <div class="empty-state">
+            <p>No data available for download. Start crawling first.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================================
+    // STATE MANAGEMENT
+    // ================================
+    let appState = {
+      jobs: [],
+      crawling: false,
+      firecrawlStatus: 'unknown',
+      lastCrawlTime: null
+    };
+
+    const FIRECRAWL_API = 'http://localhost:3002';
+    const STORAGE_KEY = 'telecalling-jobs';
+
+    // ================================
+    // INITIALIZATION
+    // ================================
+    window.addEventListener('load', () => {
+      loadFromStorage();
+      checkFirecrawlHealth();
+      updateUI();
+      setInterval(checkFirecrawlHealth, 30000); // Check every 30 seconds
+    });
+
+    // ================================
+    // FIRECRAWL HEALTH CHECK
+    // ================================
+    async function checkFirecrawlHealth() {
+      try {
+        const response = await fetch(`${FIRECRAWL_API}/health`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+          appState.firecrawlStatus = 'running';
+        } else {
+          appState.firecrawlStatus = 'error';
+        }
+      } catch (error) {
+        appState.firecrawlStatus = 'offline';
+      }
+
+      updateFirecrawlStatus();
+    }
+
+    function updateFirecrawlStatus() {
+      const statusEl = document.getElementById('firecrawl-status');
+      if (appState.firecrawlStatus === 'running') {
+        statusEl.className = 'status-item success';
+        statusEl.innerHTML = '<label>Firecrawl Status</label><div class="value">✅ Running</div>';
+      } else if (appState.firecrawlStatus === 'offline') {
+        statusEl.className = 'status-item danger';
+        statusEl.innerHTML = '<label>Firecrawl Status</label><div class="value">❌ Offline</div>';
+      } else {
+        statusEl.className = 'status-item warning';
+        statusEl.innerHTML = '<label>Firecrawl Status</label><div class="value">⚠️ Error</div>';
+      }
+    }
+
+    // ================================
+    // MAIN CRAWLING FUNCTION
+    // ================================
+    async function startCrawl() {
+      if (appState.firecrawlStatus !== 'running') {
+        showAlert('Firecrawl is not running on http://localhost:3002', 'danger');
+        return;
+      }
+
+      const portals = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(el => el.value);
+
+      if (portals.length === 0) {
+        showAlert('Please select at least one portal', 'warning');
+        return;
+      }
+
+      const searchQuery = document.getElementById('search-query').value || 'telecaller';
+
+      appState.crawling = true;
+      document.getElementById('btn-start-crawl').disabled = true;
+      document.getElementById('crawl-progress').style.display = 'block';
+      appState.jobs = [];
+
+      showAlert('Starting crawl... This may take a few minutes.', 'info');
+
+      const totalSteps = portals.length * 2; // Each portal: search + details
+      let currentStep = 0;
+
+      try {
+        for (const portal of portals) {
+          updateProgress(++currentStep, totalSteps, `Crawling ${portal}...`);
+          await crawlPortal(portal, searchQuery);
+        }
+
+        appState.lastCrawlTime = new Date().toLocaleString();
+        saveToStorage();
+        showAlert(`Successfully extracted ${appState.jobs.length} job listings!`, 'success');
+      } catch (error) {
+        showAlert(`Crawling error: ${error.message}`, 'danger');
+      } finally {
+        appState.crawling = false;
+        document.getElementById('btn-start-crawl').disabled = false;
+        document.getElementById('crawl-progress').style.display = 'none';
+        updateUI();
+      }
+    }
+
+    // ================================
+    // PORTAL-SPECIFIC CRAWLERS
+    // ================================
+    async function crawlPortal(portal, query) {
+      const urls = {
+        naukri: `https://www.naukri.com/search?keyword=${encodeURIComponent(query)}`,
+        indeed: `https://www.indeed.com/jobs?q=${encodeURIComponent(query)}&l=India`,
+        apna: `https://www.apnaapp.com/jobs?q=${encodeURIComponent(query)}`
+      };
+
+      const url = urls[portal];
+      if (!url) return;
+
+      try {
+        const response = await fetch(`${FIRECRAWL_API}/v1/crawl`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, timeout: 60000 })
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        
+        if (data.data && data.data.markdown) {
+          const jobs = extractJobsFromContent(data.data.markdown, portal);
+          appState.jobs.push(...jobs);
+        }
+      } catch (error) {
+        console.error(`Error crawling ${portal}:`, error);
+      }
+    }
+
+    // ================================
+    // JOB EXTRACTION
+    // ================================
+    function extractJobsFromContent(content, portal) {
+      const jobs = [];
+      
+      // Keywords for filtering
+      const telecallingKeywords = ['telecaller', 'telecalling', 'voice process', 'call executive', 'customer support', 'inbound call', 'bpo', 'telesales'];
+      
+      // Simple extraction: split by common job separators
+      const lines = content.split('\n').filter(l => l.trim().length > 5);
+      
+      let currentJob = null;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Check if line contains job title (common patterns)
+        if (line.length > 10 && line.length < 100) {
+          const lowerLine = line.toLowerCase();
+          
+          // Check for telecalling keywords
+          if (telecallingKeywords.some(kw => lowerLine.includes(kw))) {
+            if (currentJob) {
+              jobs.push(currentJob);
+            }
+            
+            currentJob = {
+              title: line.substring(0, 100),
+              company: lines[i + 1]?.substring(0, 80) || 'Unknown',
+              location: lines[i + 2]?.substring(0, 80) || 'Not specified',
+              description: lines[i + 3]?.substring(0, 300) || '',
+              phone: extractPhone(content.substring(Math.max(0, content.indexOf(line) - 500), content.indexOf(line) + 500)),
+              email: extractEmail(content.substring(Math.max(0, content.indexOf(line) - 500), content.indexOf(line) + 500)),
+              source: portal,
+              extractedAt: new Date().toISOString()
+            };
+          }
+        }
+      }
+      
+      if (currentJob) {
+        jobs.push(currentJob);
+      }
+      
+      return jobs;
+    }
+
+    function extractPhone(text) {
+      const phoneRegex = /(?:\+?91[-.\s]?|0)?\d{10}/;
+      const match = text.match(phoneRegex);
+      return match ? match[0] : null;
+    }
+
+    function extractEmail(text) {
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+      const match = text.match(emailRegex);
+      return match ? match[0] : null;
+    }
+
+    // ================================
+    // STORAGE
+    // ================================
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        jobs: appState.jobs,
+        lastCrawlTime: appState.lastCrawlTime
+      }));
+    }
+
+    function loadFromStorage() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const data = JSON.parse(stored);
+        appState.jobs = data.jobs || [];
+        appState.lastCrawlTime = data.lastCrawlTime;
+      }
+    }
+
+    // ================================
+    // UI UPDATES
+    // ================================
+    function updateUI() {
+      document.getElementById('jobs-count').textContent = appState.jobs.length;
+      document.getElementById('stored-count').textContent = appState.jobs.length;
+      document.getElementById('last-updated').textContent = appState.lastCrawlTime || 'Never';
+
+      // Update preview tab
+      updatePreview();
+
+      // Update JSON tab
+      updateJSON();
+
+      // Update downloads tab
+      updateDownloads();
+    }
+
+    function updatePreview() {
+      const container = document.getElementById('preview-container');
+      
+      if (appState.jobs.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No jobs extracted yet.</p></div>';
+        return;
+      }
+
+      const jobsHTML = appState.jobs.map((job, i) => `
+        <div class="job-card">
+          <div class="job-title">${escapeHTML(job.title)}</div>
+          <div class="job-company">${escapeHTML(job.company)}</div>
+          <div class="job-meta">
+            <span>📍 ${escapeHTML(job.location)}</span>
+            <span>🏢 ${job.source.toUpperCase()}</span>
+          </div>
+          <div class="job-details">
+            ${job.description ? `<div class="detail-row"><div class="detail-label">Description:</div><div class="detail-value">${escapeHTML(job.description)}</div></div>` : ''}
+            <div class="detail-row"><div class="detail-label">Phone:</div><div class="detail-value">${job.phone || '❌ Not found'}</div></div>
+            <div class="detail-row"><div class="detail-label">Email:</div><div class="detail-value">${job.email || '❌ Not found'}</div></div>
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `<div class="job-count">${appState.jobs.length} Jobs Found</div>${jobsHTML}`;
+    }
+
+    function updateJSON() {
+      const container = document.getElementById('json-container');
+      
+      if (appState.jobs.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No data to display.</p></div>';
+        return;
+      }
+
+      const jsonData = {
+        metadata: {
+          totalJobs: appState.jobs.length,
+          extractedAt: appState.lastCrawlTime,
+          firecrawlUrl: FIRECRAWL_API
+        },
+        jobs: appState.jobs
+      };
+
+      container.innerHTML = `
+        <div class="json-viewer">${escapeHTML(JSON.stringify(jsonData, null, 2))}</div>
+      `;
+    }
+
+    function updateDownloads() {
+      const container = document.getElementById('download-container');
+      
+      if (appState.jobs.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No data available for download.</p></div>';
+        return;
+      }
+
+      const timestamp = new Date().toISOString().split('T')[0];
+
+      container.innerHTML = `
+        <div style="margin-bottom: 20px;">
+          <p style="margin-bottom: 15px; color: var(--text-light);">Download extracted job data:</p>
+          <div class="button-group">
+            <button class="btn-primary" onclick="downloadJSON()">📥 Download JSON</button>
+            <button class="btn-primary" onclick="downloadCSV()">📥 Download CSV</button>
+            <button class="btn-secondary" onclick="copyToClipboard()">📋 Copy JSON</button>
+          </div>
+        </div>
+        <div class="json-viewer" id="data-preview">${escapeHTML(JSON.stringify({ jobs: appState.jobs }, null, 2))}</div>
+      `;
+    }
+
+    // ================================
+    // DOWNLOAD FUNCTIONS
+    // ================================
+    function downloadJSON() {
+      const data = {
+        metadata: {
+          totalJobs: appState.jobs.length,
+          extractedAt: appState.lastCrawlTime,
+          firecrawlUrl: FIRECRAWL_API
+        },
+        jobs: appState.jobs
+      };
+
+      const jsonString = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `telecalling-jobs-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadCSV() {
+      const headers = ['Title', 'Company', 'Location', 'Description', 'Phone', 'Email', 'Source', 'Extracted At'];
+      const rows = appState.jobs.map(job => [
+        `"${job.title.replace(/"/g, '""')}"`,
+        `"${job.company.replace(/"/g, '""')}"`,
+        `"${job.location.replace(/"/g, '""')}"`,
+        `"${(job.description || '').replace(/"/g, '""')}"`,
+        `"${job.phone || ''}"`,
+        `"${job.email || ''}"`,
+        job.source,
+        job.extractedAt
+      ]);
+
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `telecalling-jobs-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyToClipboard() {
+      const data = JSON.stringify({ jobs: appState.jobs }, null, 2);
+      navigator.clipboard.writeText(data).then(() => {
+        showAlert('JSON copied to clipboard!', 'success');
+      });
+    }
+
+    // ================================
+    // UI HELPERS
+    // ================================
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.remove('active');
+      });
+      document.querySelectorAll('.nav-tab').forEach(el => {
+        el.classList.remove('active');
+      });
+
+      // Show selected tab
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function updateProgress(current, total, message) {
+      const percent = (current / total) * 100;
+      document.getElementById('progress-fill').style.width = percent + '%';
+      document.getElementById('progress-text').textContent = `${message} (${current}/${total})`;
+    }
+
+    function showAlert(message, type = 'info') {
+      const container = document.getElementById('alert-container');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+      container.appendChild(alert);
+
+      setTimeout(() => alert.remove(), 5000);
+    }
+
+    function clearAllData() {
+      if (confirm('Are you sure you want to delete all stored job data?')) {
+        appState.jobs = [];
+        appState.lastCrawlTime = null;
+        localStorage.removeItem(STORAGE_KEY);
+        updateUI();
+        showAlert('All data cleared', 'warning');
+      }
+    }
+
+    function escapeHTML(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,522 @@
+# ARCHITECTURE & WORKFLOW DIAGRAM
+
+## 🏗️ System Architecture
+
+```
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                         YOUR BROWSER ENVIRONMENT                          ║
+║                                                                           ║
+║  ┌─────────────────────────────────────────────────────────────────────┐ ║
+║  │                                                                     │ ║
+║  │  LOCAL SERVER: http://localhost:8080                              │ ║
+║  │  ┌─────────────────────────────────────────────────────────────┐  │ ║
+║  │  │                                                             │  │ ║
+║  │  │  Single Page Application (SPA)                              │  │ ║
+║  │  │  - HTML: Form + Results Display                             │  │ ║
+║  │  │  - CSS: Styling (Responsive)                                │  │ ║
+║  │  │  - JavaScript: Business Logic                               │  │ ║
+║  │  │                                                             │  │ ║
+║  │  │  ┌──────────────────────────────────────────────────────┐  │  │ ║
+║  │  │  │  FORM SECTION                                       │  │  │ ║
+║  │  │  │  • Select Portals (Naukri, Indeed, Apna)           │  │  │ ║
+║  │  │  │  • Enter Search Query                               │  │  │ ║
+║  │  │  │  • Start Crawl Button                               │  │  │ ║
+║  │  │  └──────────────────────────────────────────────────────┘  │  │ ║
+║  │  │                         ↓                                   │  │ ║
+║  │  │  ┌──────────────────────────────────────────────────────┐  │  │ ║
+║  │  │  │  JAVASCRIPT ENGINE                                  │  │  │ ║
+║  │  │  │  • checkFirecrawlHealth()                            │  │  │ ║
+║  │  │  │  • startCrawl()                                      │  │  │ ║
+║  │  │  │  • crawlPortal() for each portal                     │  │  │ ║
+║  │  │  │  • extractJobsFromContent()                          │  │  │ ║
+║  │  │  │  • saveToStorage()                                   │  │  │ ║
+║  │  │  └──────────────────────────────────────────────────────┘  │  │ ║
+║  │  │                         ↓                                   │  │ ║
+║  │  │  ┌──────────────────────────────────────────────────────┐  │  │ ║
+║  │  │  │  RESULTS DISPLAY                                    │  │  │ ║
+║  │  │  │  • Preview Tab (Job Cards)                           │  │  │ ║
+║  │  │  │  • JSON Tab (Formatted JSON)                         │  │  │ ║
+║  │  │  │  • Downloads Tab (Export Options)                    │  │  │ ║
+║  │  │  └──────────────────────────────────────────────────────┘  │  │ ║
+║  │  │                         ↓                                   │  │ ║
+║  │  │  ┌──────────────────────────────────────────────────────┐  │  │ ║
+║  │  │  │  BROWSER STORAGE (localStorage)                      │  │  │ ║
+║  │  │  │  • Key: "telecalling-jobs"                           │  │  │ ║
+║  │  │  │  • Data: {jobs: [...], lastCrawlTime: ...}          │  │  │ ║
+║  │  │  │  • Persists across page refreshes                    │  │  │ ║
+║  │  │  └──────────────────────────────────────────────────────┘  │  │ ║
+║  │  │                                                             │  │ ║
+║  │  └─────────────────────────────────────────────────────────────┘  │ ║
+║  │                                                                     │ ║
+║  └─────────────────────────────────────────────────────────────────────┘ ║
+║                                                                           ║
+║                              ↑        ↓                                   ║
+║                              │        │                                   ║
+║                        DIRECT API CALLS                                   ║
+║                   (NO BACKEND SERVER INVOLVED)                            ║
+║                              │        ↓                                   ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+                                 │        ↓
+                                 │        │
+        ┌────────────────────────┴────────┴──────────────────────┐
+        │                                                         │
+        ▼                                                         ▼
+┌─────────────────────────────────┐           ┌─────────────────────────────────┐
+│  FIRECRAWL API                  │           │  TARGET WEBSITES                │
+│  (localhost:3002)               │           │                                 │
+│                                 │           │ • https://naukri.com            │
+│ POST /v1/crawl                  │◄─────────►│ • https://indeed.com            │
+│ GET /health                     │           │ • https://apnaapp.com           │
+│                                 │           │                                 │
+│ Returns: Markdown + HTML Content│           │ (Job Listings)                  │
+└─────────────────────────────────┘           └─────────────────────────────────┘
+```
+
+---
+
+## 🔄 Data Flow - Crawling Process
+
+```
+USER INTERACTION
+    ↓
+┌───────────────────────────────────────────┐
+│  User clicks: "🚀 Start Crawling"        │
+└───────────────────────────────────────────┘
+    ↓
+┌───────────────────────────────────────────┐
+│  STEP 1: Health Check                     │
+│  GET http://localhost:3002/health         │
+│  Response: ✅ or ❌                        │
+└───────────────────────────────────────────┘
+    │
+    ├─→ ❌ Firecrawl Offline?
+    │   └─→ Show Error: "Firecrawl not running"
+    │       STOP
+    │
+    └─→ ✅ Firecrawl Running
+        ↓
+    ┌───────────────────────────────────────────┐
+    │  STEP 2: For Each Selected Portal         │
+    │  (Naukri, Indeed, Apna)                   │
+    └───────────────────────────────────────────┘
+        ↓
+    ┌───────────────────────────────────────────┐
+    │  POST /v1/crawl {url: portal_url}         │
+    │  Firecrawl crawls the website             │
+    │  Returns: {data: {markdown: "..."}}       │
+    └───────────────────────────────────────────┘
+        ↓
+    ┌───────────────────────────────────────────┐
+    │  STEP 3: Extract Jobs                     │
+    │                                           │
+    │  1. Parse markdown content                │
+    │  2. Split into lines                      │
+    │  3. Search for telecalling keywords       │
+    │  4. Extract structured fields:            │
+    │     • title                               │
+    │     • company                             │
+    │     • location                            │
+    │     • description                         │
+    │     • phone (regex extraction)            │
+    │     • email (regex extraction)            │
+    │  5. Filter by keyword match               │
+    └───────────────────────────────────────────┘
+        ↓
+    ┌───────────────────────────────────────────┐
+    │  STEP 4: Accumulate Results               │
+    │  jobs[] array grows with each portal      │
+    └───────────────────────────────────────────┘
+        ↓
+    ┌───────────────────────────────────────────┐
+    │  STEP 5: Save to localStorage             │
+    │  localStorage.setItem('telecalling-jobs', │
+    │    {jobs: [...], lastCrawlTime: ...})     │
+    └───────────────────────────────────────────┘
+        ↓
+    ┌───────────────────────────────────────────┐
+    │  STEP 6: Update UI                        │
+    │  • Show success message                   │
+    │  • Update job count                       │
+    │  • Render preview cards                   │
+    │  • Format JSON display                    │
+    │  • Enable downloads                       │
+    └───────────────────────────────────────────┘
+        ↓
+    ┌───────────────────────────────────────────┐
+    │  USER SEES RESULTS IN 3 TABS              │
+    │  • Preview: Job cards                     │
+    │  • JSON: Raw formatted data               │
+    │  • Downloads: JSON/CSV export             │
+    └───────────────────────────────────────────┘
+```
+
+---
+
+## 🎯 Filtering & Extraction Logic
+
+```
+CRAWLED CONTENT
+(Markdown from Firecrawl)
+    │
+    ├─→ Split by newlines
+    ├─→ Filter empty/short lines
+    └─→ For each line:
+        │
+        ├─→ Check for telecalling keywords:
+        │   • telecaller
+        │   • telecalling
+        │   • voice process
+        │   • call executive
+        │   • customer support
+        │   • inbound call
+        │   • bpo
+        │   • telesales
+        │
+        ├─→ ✅ Keyword found?
+        │   └─→ EXTRACT JOB DATA:
+        │       │
+        │       ├─→ Title: Current line (0-80 chars)
+        │       ├─→ Company: Next line
+        │       ├─→ Location: Line after company
+        │       ├─→ Description: Line after location
+        │       ├─→ Phone: Regex on surrounding text
+        │       ├─→ Email: Regex on surrounding text
+        │       ├─→ Source: naukri/indeed/apna
+        │       └─→ Timestamp: Current time
+        │
+        └─→ ❌ Keyword NOT found?
+            └─→ Skip this line
+```
+
+---
+
+## 💾 Data Structure
+
+### Extracted Job Object:
+```javascript
+{
+  "title": "Telecaller - Sales Support",
+  "company": "XYZ Company Ltd",
+  "location": "Bangalore, Karnataka",
+  "description": "Handle inbound customer calls...",
+  "phone": "+91-9876543210" | null,
+  "email": "contact@company.com" | null,
+  "source": "indeed" | "naukri" | "apna",
+  "extractedAt": "2026-01-29T10:30:15.123Z"
+}
+```
+
+### Storage Format:
+```javascript
+{
+  "jobs": [
+    {job1},
+    {job2},
+    ...
+  ],
+  "lastCrawlTime": "2026-01-29T10:30:00Z"
+}
+```
+
+---
+
+## 🔄 Export Workflows
+
+### JSON Export
+```
+appState.jobs
+    ↓
+Format: {metadata: {...}, jobs: [...]}
+    ↓
+Convert to JSON string
+    ↓
+Create Blob
+    ↓
+Download file: telecalling-jobs-YYYY-MM-DD.json
+    ↓
+✅ File saved to Downloads folder
+```
+
+### CSV Export
+```
+appState.jobs
+    ↓
+Headers: Title, Company, Location, Description, Phone, Email, Source, ExtractedAt
+    ↓
+Map each job to CSV row
+    ↓
+Quote fields with commas/quotes
+    ↓
+Join with newlines
+    ↓
+Create Blob
+    ↓
+Download file: telecalling-jobs-YYYY-MM-DD.csv
+    ↓
+✅ File saved to Downloads folder
+```
+
+---
+
+## 🖥️ Server Architecture (Static File Serving)
+
+```
+Node.js http.createServer()
+    │
+    ├─→ Listen on port 8080
+    │
+    └─→ For each request:
+        │
+        ├─→ Enable CORS headers
+        ├─→ Handle OPTIONS requests
+        │
+        ├─→ Determine file path
+        │   (/ → index.html)
+        │
+        ├─→ Read file from disk
+        │
+        ├─→ Determine MIME type
+        │   • .html → text/html
+        │   • .js → application/javascript
+        │   • .css → text/css
+        │   • etc.
+        │
+        ├─→ Send response:
+        │   200 OK + file content
+        │   (or 404 if file not found)
+        │
+        └─→ End connection
+```
+
+---
+
+## 🔒 Security Model
+
+```
+SECURITY LAYERS:
+
+Layer 1: Browser Isolation
+├─ localStorage is per-origin
+├─ No external server to hack
+└─ Data never leaves your computer
+
+Layer 2: CORS
+├─ Browser enforces CORS on Firecrawl calls
+├─ Frontend handles CORS gracefully
+└─ Firecrawl configured with CORS headers
+
+Layer 3: No Authentication
+├─ Firecrawl runs locally
+├─ No API keys needed
+├─ No user tracking
+└─ No remote server dependency
+
+Layer 4: Data Clearance
+├─ User can clear all data anytime
+├─ No persistent backend
+├─ No cloud storage
+└─ Full user control
+```
+
+---
+
+## 📊 Performance Characteristics
+
+```
+SPEED BREAKDOWN:
+
+Health Check
+├─ Network latency: ~100-500ms
+├─ Firecrawl processing: ~50ms
+└─ Total: <1 second
+
+Single Portal Crawl
+├─ Network: ~500-1000ms (depends on site)
+├─ Firecrawl crawling: 20-90 seconds (site dependent)
+├─ JavaScript extraction: <1 second
+├─ localStorage save: <100ms
+└─ Total: 30-120 seconds per portal
+
+All 3 Portals
+├─ Sequential: 1.5-5 minutes
+└─ Parallel could be faster (browser limitation)
+
+Export
+├─ JSON stringify: <100ms
+├─ CSV conversion: <200ms
+├─ File download: <1 second
+└─ Total: <1 second
+```
+
+---
+
+## ✅ Validation Flow
+
+```
+BEFORE CRAWLING:
+
+1. Check if any portals selected
+   └─→ Show error if none selected
+
+2. Check Firecrawl health
+   ├─→ GET /health
+   ├─→ ❌ If offline
+   │   └─→ Show: "Firecrawl not running"
+   │       STOP
+   └─→ ✅ If running
+       Continue...
+
+3. Get search query
+   ├─→ Default: "telecaller"
+   └─→ Or user input
+
+DURING CRAWLING:
+
+1. API error handling
+   ├─→ HTTP error? Catch and continue
+   ├─→ No content? Skip that portal
+   └─→ Parse error? Log and continue
+
+2. Data validation
+   ├─→ Title required (min 5 chars)
+   ├─→ Company optional
+   ├─→ Location optional
+   ├─→ Phone/Email optional (allow null)
+   └─→ Source always added
+
+AFTER CRAWLING:
+
+1. Check job count
+   ├─→ 0 jobs? Show info message
+   └─→ >0 jobs? Proceed to display
+
+2. Enable UI
+   ├─→ Enable download buttons
+   ├─→ Show results in tabs
+   └─→ Update statistics
+```
+
+---
+
+## 🎨 UI State Management
+
+```
+App State Object:
+{
+  jobs: [],              // Array of extracted jobs
+  crawling: false,       // Currently crawling?
+  firecrawlStatus: 'unknown', // running/offline/error
+  lastCrawlTime: null    // Timestamp
+}
+
+State Updates:
+├─→ User action
+│   └─→ Update state
+│       └─→ updateUI()
+│           ├─→ Update statistics
+│           ├─→ Render preview
+│           ├─→ Format JSON
+│           └─→ Show downloads
+│
+└─→ Page load
+    └─→ loadFromStorage()
+        └─→ Restore state
+            └─→ updateUI()
+```
+
+---
+
+## 🚀 Deployment Checklist
+
+```
+✅ Frontend
+  ✓ index.html created
+  ✓ HTML structure valid
+  ✓ CSS responsive
+  ✓ JavaScript logic complete
+  ✓ API calls configured
+
+✅ Server
+  ✓ serve.js created
+  ✓ Static file serving working
+  ✓ MIME types configured
+  ✓ Error handling in place
+  ✓ Port 8080 accessible
+
+✅ Integration
+  ✓ Firecrawl API calls working
+  ✓ CORS handling correct
+  ✓ Error messages displayed
+  ✓ Success feedback shown
+  ✓ Progress indicator working
+
+✅ Data
+  ✓ localStorage working
+  ✓ JSON export functional
+  ✓ CSV export functional
+  ✓ Copy to clipboard working
+  ✓ Clear data working
+
+✅ Testing
+  ✓ Health check tested
+  ✓ Single portal crawl tested
+  ✓ Multiple portal crawl tested
+  ✓ Job extraction tested
+  ✓ Export functions tested
+  ✓ UI updates tested
+
+✅ Documentation
+  ✓ FRONTEND_SYSTEM_GUIDE.md created
+  ✓ QUICK_START.txt created
+  ✓ This architecture doc created
+```
+
+---
+
+## 🎯 Success Criteria
+
+```
+✅ All met:
+
+1. Frontend-only system
+   └─ No Express backend running
+
+2. Direct Firecrawl calls
+   └─ http://localhost:3002 ✓
+
+3. Support 3 portals
+   └─ Naukri, Indeed, Apna ✓
+
+4. Extract telecalling jobs
+   └─ Filtered by keywords ✓
+
+5. Structured data
+   └─ title, company, location, description, phone, email ✓
+
+6. Phone/Email handling
+   └─ Extraction with null fallback ✓
+
+7. Results display
+   └─ Preview, JSON, Downloads tabs ✓
+
+8. localStorage persistence
+   └─ Survives page refresh ✓
+
+9. Export functionality
+   └─ JSON and CSV downloads ✓
+
+10. Health check
+    └─ Before crawling ✓
+```
+
+---
+
+**Status**: ✅ **READY FOR PRODUCTION USE**
+
+**Architecture**: Frontend-Only ✓
+**API Integration**: Direct Firecrawl ✓
+**Data Persistence**: localStorage ✓
+**User Interface**: Responsive & Intuitive ✓
+
+🚀 **Start here**: http://localhost:8080

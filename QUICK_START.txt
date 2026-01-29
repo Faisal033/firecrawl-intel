@@ -1,0 +1,214 @@
+# 🚀 QUICK START - Telecalling Job Leads Extractor
+
+## 🎯 What You Have
+
+A **frontend-only** system that crawls job sites **directly** with Firecrawl.
+
+```
+NO EXPRESS BACKEND
+NO /api ROUTES
+NO SERVER DATABASE
+↓
+Pure Frontend + Direct Firecrawl API
+```
+
+---
+
+## 📱 Open the App
+
+```
+🌐 http://localhost:8080
+```
+
+**That's it!** The app loads in your browser.
+
+---
+
+## 5-Minute Usage
+
+### 1️⃣ Open Browser
+```
+http://localhost:8080
+```
+
+### 2️⃣ Select Portals
+```
+☑️ Naukri
+☑️ Indeed  
+☑️ Apna
+(all default selected)
+```
+
+### 3️⃣ Enter Search (optional)
+```
+Default: "telecaller"
+Or type: "voice process", "call executive"
+```
+
+### 4️⃣ Click Start
+```
+🚀 Start Crawling
+```
+
+### 5️⃣ View Results
+```
+Tab 1: 📋 Preview
+       └─ See job cards
+
+Tab 2: 📄 JSON Data
+       └─ View formatted JSON
+
+Tab 3: 💾 Downloads
+       └─ Download JSON/CSV
+```
+
+---
+
+## ✅ System Check
+
+### Is Firecrawl Running?
+```
+Open: http://localhost:3002
+Should show Firecrawl status page
+```
+
+### Is Frontend Running?
+```
+Open: http://localhost:8080
+Should show job crawler interface
+```
+
+---
+
+## 📊 What Gets Extracted
+
+For each job:
+```
+✅ Job Title
+✅ Company Name
+✅ Location
+✅ Description
+✅ Phone (if available)
+✅ Email (if available)
+✅ Source (naukri/indeed/apna)
+✅ Extraction Timestamp
+```
+
+---
+
+## 🏗️ Architecture
+
+```
+Your Browser (Port 8080)
+    ↓
+    ↓ Direct HTTP calls
+    ↓
+Firecrawl API (Port 3002)
+```
+
+**NO BACKEND INVOLVED**
+
+---
+
+## 💾 Data Storage
+
+- Stored in **browser's localStorage**
+- Survives page refresh
+- Cleared with "🗑️ Clear Data" button
+- Exports to JSON/CSV file
+
+---
+
+## 🚨 If Something Goes Wrong
+
+### Firecrawl not responding?
+```
+1. Check: http://localhost:3002/health
+2. Run: docker-compose up -d
+3. Wait 30 seconds
+4. Refresh browser
+```
+
+### No jobs found?
+```
+1. Try different keywords
+2. Check if sites are accessible
+3. Some sites block scrapers
+4. Check browser console (F12)
+```
+
+### Server not found?
+```
+1. Check: http://localhost:8080
+2. Kill old processes: taskkill /F /IM node.exe
+3. Restart: node serve.js
+```
+
+---
+
+## 🎨 Features
+
+- ✅ Select multiple portals
+- ✅ Custom search keywords
+- ✅ Real-time progress
+- ✅ Formatted JSON display
+- ✅ Download JSON/CSV
+- ✅ Copy to clipboard
+- ✅ Browser storage persistence
+- ✅ Responsive design
+
+---
+
+## 📁 Files
+
+```
+index.html    ← Frontend app
+serve.js      ← Static server
+```
+
+---
+
+## ⚡ Start Server
+
+```powershell
+cd "c:\Users\535251\OneDrive\Documents\competitor-intelligence"
+node serve.js
+```
+
+Then open: **http://localhost:8080**
+
+---
+
+## 🔗 URLs
+
+| Service | URL | Status |
+|---------|-----|--------|
+| Frontend | http://localhost:8080 | ✅ Running |
+| Firecrawl | http://localhost:3002 | ✅ Check manually |
+
+---
+
+## 🎯 Use Cases
+
+1. **Extract job leads**: Find telecalling jobs from 3 portals
+2. **Get contact info**: Extract phone/email when available
+3. **Batch export**: Download all jobs as JSON/CSV
+4. **Browser storage**: No need for database
+
+---
+
+## 🔒 Privacy
+
+- ✅ All data stays in your browser
+- ✅ No cloud uploads
+- ✅ No external API keys needed
+- ✅ No user tracking
+- ✅ Clear anytime
+
+---
+
+**Ready?** Open http://localhost:8080 now! 🚀
+
+---
+
+For detailed guide, see: `FRONTEND_SYSTEM_GUIDE.md`

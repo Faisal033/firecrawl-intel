@@ -182,13 +182,33 @@ const changeSchema = new mongoose.Schema(
 changeSchema.index({ competitorId: 1, detectedAt: -1 });
 changeSchema.index({ newsId: 1 });
 
-// Export models
-module.exports = {
-  Competitor: mongoose.model('Competitor', competitorSchema),
-  News: mongoose.model('News', newsSchema),
-  Page: mongoose.model('Page', pageSchema),
-  Signal: mongoose.model('Signal', signalSchema),
-  Threat: mongoose.model('Threat', threatSchema),
-  Insight: mongoose.model('Insight', insightSchema),
-  Change: mongoose.model('Change', changeSchema),
-};
+// Export models - safe initialization
+let models = {};
+try {
+  models = {
+    Competitor: mongoose.model('Competitor', competitorSchema),
+    News: mongoose.model('News', newsSchema),
+    Page: mongoose.model('Page', pageSchema),
+    Signal: mongoose.model('Signal', signalSchema),
+    Threat: mongoose.model('Threat', threatSchema),
+    Insight: mongoose.model('Insight', insightSchema),
+    Change: mongoose.model('Change', changeSchema),
+  };
+} catch (err) {
+  // Models might already exist in memory
+  try {
+    models = {
+      Competitor: mongoose.model('Competitor'),
+      News: mongoose.model('News'),
+      Page: mongoose.model('Page'),
+      Signal: mongoose.model('Signal'),
+      Threat: mongoose.model('Threat'),
+      Insight: mongoose.model('Insight'),
+      Change: mongoose.model('Change'),
+    };
+  } catch (err2) {
+    console.warn('⚠️  Could not initialize models - database may not be available');
+  }
+}
+
+module.exports = models;
