@@ -1,23 +1,36 @@
 {
   "name": "competitor-intelligence",
   "version": "1.0.0",
-  "description": "Competitor Intelligence SaaS",
+  "description": "Competitor Intelligence SaaS - India Job Crawler with Firecrawl",
   "main": "src/app.js",
   "type": "commonjs",
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  },
   "scripts": {
     "dev:backend": "nodemon src/app.js",
     "dev": "npm run dev:backend",
     "start": "node src/app.js",
+    "build": "echo 'Build complete'",
     "test:ingestion": "node test-ingestion.js",
     "test:firecrawl": "node test-firecrawl.js",
-    "check:crawl": "node check-crawl.js"
+    "check:crawl": "node check-crawl.js",
+    "crawl:india": "node crawl-india-jobs.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "crawler",
+    "firecrawl",
+    "jobs",
+    "india",
+    "competitor-intelligence"
+  ],
+  "author": "Your Name",
   "license": "ISC",
   "dependencies": {
     "@mendable/firecrawl-js": "^4.11.4",
     "axios": "^1.13.4",
+    "csv-writer": "^1.6.0",
     "dotenv": "^17.2.3",
     "express": "^4.19.2",
     "mongoose": "^9.1.5",
